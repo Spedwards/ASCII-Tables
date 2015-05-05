@@ -1,4 +1,5 @@
 *.class
+package-info.java
 
 # Directories
 docs/
