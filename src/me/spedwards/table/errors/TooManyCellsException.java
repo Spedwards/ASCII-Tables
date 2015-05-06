@@ -1,6 +1,6 @@
 package me.spedwards.table.errors;
 
-public class TooManyCellsException extends CellsException {
+public class TooManyCellsException extends TableCellsException {
 
 	public TooManyCellsException(String message) {
 		super(message);
