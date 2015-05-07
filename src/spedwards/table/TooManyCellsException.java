@@ -1,11 +1,11 @@
-package me.spedwards.table.errors;
+package spedwards.table;
 
-public class TooManyCellsException extends TableCellsException {
+public class TooManyCellsException extends TableException {
 
 	public TooManyCellsException(String message) {
 		super(message);
 	}
-	
+
 	public TooManyCellsException(String message, Throwable throwable) {
 		super(message, throwable);
 	}

@@ -1,23 +1,22 @@
-package me.spedwards.table;
+package spedwards.table;
 
 import java.util.*;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import org.json.*;
-
-import me.spedwards.table.errors.*;
 
 /**
  * Table object.
  * @author	Liam Edwards
- * @version	1.2.0
+ * @version	1.3.0
  */
 public class Table {
-	
+
 	private ArrayList<String> header;
 	private ArrayList<ArrayList<String>> rows;
-	
+
+	private ArrayList<String> __header__;
+	private ArrayList<ArrayList<String>> __rows__;
+
 	/**
 	 * Initialize this Table with header row.
 	 * @param	header	ArrayList<String> of cells to be used as the table header.
@@ -25,8 +24,11 @@ public class Table {
 	public Table(ArrayList<String> header) {
 		this.header = header;
 		this.rows = new ArrayList<ArrayList<String>>();
+
+		this.__header__ = header;
+		this.__rows__ = new ArrayList<ArrayList<String>>();
 	}
-	
+
 	/**
 	 * Adds a row to this Table.
 	 * @param	row						ArrayList<String> of cells to be added.
@@ -40,9 +42,10 @@ public class Table {
 			throw new TooManyCellsException("");
 		} else {
 			this.rows.add(row);
+			this.__rows__.add(row);
 		}
 	}
-	
+
 	/**
 	 * Create a row
 	 * @param	cells	an indefinite amount of strings to be used as cells.
@@ -56,36 +59,36 @@ public class Table {
 		}
 		return out;
 	}
-	
+
 	/**
 	 * Gets header row of this Table.
 	 * @return this Table header row.
 	 */
 	public ArrayList<String> getHeader() {
-		return this.header;
+		return this.__header__;
 	}
-	
+
 	/**
 	 * Gets rows of this Table.
 	 * @return	table rows.
 	 */
 	public ArrayList<ArrayList<String>> getRows() {
-		return this.rows;
+		return this.__rows__;
 	}
-	
+
 	/**
 	 * Creates and converts this Table to a String.
 	 * @return	this table as a String.
 	 */
 	public String create() {
 		adjust();
-		
+
 		String table = "",
 			tmp = "",
 			headers = "",
 			body = "",
 			line = "+";
-		
+
 		for (int i = 0; i < this.header.size(); i++) {
 			for (int j = 0; j < this.header.get(i).length() + 4; j++) {
 				line += "-";
@@ -97,21 +100,21 @@ public class Table {
 		}
 		tmp += "|";
 		headers = line + "\n" + tmp + "\n" + line;
-		
+
 		tmp = "";
-		
+
 		for (ArrayList<String> row : this.rows) {
 			for (String cell : row) {
 				body += "|  " + cell + "  ";
 			}
 			body += "|\n";
 		}
-		
+
 		table = headers + "\n" + body + line;
-		
+
 		return table;
 	}
-	
+
 	private void adjust() {
 		for (int i = 0; i < rows.size(); i++) {
 			for (int j = 0; j < rows.get(i).size(); j++) {
@@ -130,7 +133,7 @@ public class Table {
 			}
 		}
 	}
-	
+
 	private String adjustCell(String item, int length) {
 		int k = 1;
 		while (item.length() < length) {
@@ -143,7 +146,7 @@ public class Table {
 		}
 		return item;
 	}
-	
+
 	/**
 	 * Converts this Table to a String.&nbsp;Same as<code>create()</code>.
 	 * @return	this Table as a String.
@@ -153,7 +156,7 @@ public class Table {
 	public String toString() {
 		return create();
 	}
-	
+
 	/**
 	 * Converts table to JSON string.
 	 * @param	table	Table object.
@@ -161,40 +164,17 @@ public class Table {
 	 * @since	1.2.0
 	 */
 	public static String toJSON(Table table) {
-		ArrayList<String> header = table.getHeader();
-		ArrayList<ArrayList<String>> rows = table.getRows();
-		
-		int countRows = rows.size();
-		int countColumns = header.size();
-		
-		String headerArray = "[";
-		for (String cell : header) {
-			headerArray += "\"";
-			headerArray += StringEscapeUtils.escapeJava(cell);
-			headerArray += "\",";
-		}
-		headerArray += "]";
-		
-		String rowsArray = "[";
-		for (ArrayList<String> row : rows) {
-			rowsArray += "[";
-			for (String cell : row) {
-				rowsArray += "\"";
-				rowsArray += StringEscapeUtils.escapeJava(cell);
-				rowsArray += "\",";
-			}
-			rowsArray += "],";
-		}
-		rowsArray += "]";
-		
-		String json = String.format("{\"header\": %s, \"cells\": %s}",
-			headerArray,
-			rowsArray
-		);
-		
-		return json.replaceAll(",]", "]");
+		Collection<String> header = table.getHeader();
+		Collection<ArrayList<String>> rows = table.getRows();
+
+		JSONObject json = new JSONObject();
+
+		json.put("header", header);
+		json.put("cells", rows);
+
+		return json.toString();
 	}
-	
+
 	/**
 	 * Converts JSON string to table.
 	 * @param	json					JSON string.
@@ -205,22 +185,22 @@ public class Table {
 		JSONObject obj = new JSONObject(json);
 		JSONArray headerJSON = obj.getJSONArray("header");
 		JSONArray rowsJSON = obj.getJSONArray("cells");
-		
+
 		ArrayList<String> header = new ArrayList<String>();
 		for (int i = 0; i < headerJSON.length(); i++) {
-			header.add(StringEscapeUtils.unescapeJava(headerJSON.getString(i)));
+			header.add(headerJSON.getString(i));
 		}
-		
+
 		ArrayList<ArrayList<String>> rows = new ArrayList<ArrayList<String>>();
 		for (int i = 0; i < rowsJSON.length(); i++) {
 			JSONArray a = rowsJSON.getJSONArray(i);
 			ArrayList<String> tmp = new ArrayList<String>();
 			for (int j = 0; j < a.length(); j++) {
-				tmp.add(StringEscapeUtils.unescapeJava(a.getString(j)));
+				tmp.add(a.getString(j));
 			}
 			rows.add(tmp);
 		}
-		
+
 		Table t = new Table(header);
 		for (ArrayList<String> row : rows) {
 			t.addRow(row);
